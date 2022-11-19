@@ -631,6 +631,9 @@ func validateDenom(denom string) error {
 	if !reDnm.MatchString(denom) {
 		return fmt.Errorf("invalid denom: %s", denom)
 	}
+	if denom != "ugnot" {
+		return fmt.Errorf("invalid denom: %s", denom)
+	}	
 	return nil
 }
 
