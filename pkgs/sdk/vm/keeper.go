@@ -152,12 +152,25 @@ func (vm *VMKeeper) AddPackage(ctx sdk.Context, msg MsgAddPackage) error {
 		return err
 	}
 	// Parse and run the files, construct *PV.
+	msgCtx := stdlibs.ExecContext{
+		ChainID:       ctx.ChainID(),
+		Height:        ctx.BlockHeight(),
+		Timestamp:     ctx.BlockTime().Unix(),
+		Msg:           msg,
+		OrigCaller:    creator.Bech32(),
+		OrigSend:      deposit,
+		OrigSendSpent: new(std.Coins),
+		OrigPkgAddr:   pkgAddr.Bech32(),
+		Banker:        NewSDKBanker(vm, ctx),
+	}
+	// Parse and run the files, construct *PV.
 	m2 := gno.NewMachineWithOptions(
 		gno.MachineOptions{
 			PkgPath:   "",
 			Output:    os.Stdout, // XXX
 			Store:     store,
 			Alloc:     store.GetAllocator(),
+			Context:   msgCtx,
 			MaxCycles: 10 * 1000 * 1000, // 10M cycles // XXX
 		})
 	m2.RunMemPackage(memPkg, true)
@@ -353,6 +366,13 @@ func (vm *VMKeeper) QueryEval(ctx sdk.Context, pkgPath string, expr string) (res
 			Alloc:     alloc,
 			MaxCycles: 10 * 1000 * 1000, // 10M cycles // XXX
 		})
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Wrap(fmt.Errorf("%v", r), "VM query eval panic: %v\n%s\n",
+				r, m.String())
+			return
+		}
+	}()
 	rtvs := m.Eval(xx)
 	res = ""
 	for i, rtv := range rtvs {
@@ -405,6 +425,13 @@ func (vm *VMKeeper) QueryEvalString(ctx sdk.Context, pkgPath string, expr string
 			Alloc:     alloc,
 			MaxCycles: 10 * 1000 * 1000, // 10M cycles // XXX
 		})
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Wrap(fmt.Errorf("%v", r), "VM query eval string panic: %v\n%s\n",
+				r, m.String())
+			return
+		}
+	}()
 	rtvs := m.Eval(xx)
 	if len(rtvs) != 1 {
 		return "", errors.New("expected 1 string result, got %d", len(rtvs))
