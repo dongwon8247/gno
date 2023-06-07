@@ -141,6 +141,27 @@ func InjectPackage(store gno.Store, pn *gno.PackageNode) {
 		pn.DefineGoNativeValue("CanBackquote", strconv.CanBackquote)
 		pn.DefineGoNativeValue("IntSize", strconv.IntSize)
 		pn.DefineGoNativeValue("AppendUint", strconv.AppendUint)
+	case "internal/std":
+		pn.DefineNative("GetOrigCaller",
+			gno.Flds( // params
+			),
+			gno.Flds( // results
+				"", "Address",
+			),
+			func(m *gno.Machine) {
+				ctx := m.Context.(ExecContext)
+				res0 := gno.Go2GnoValue(
+					m.Alloc,
+					m.Store,
+					reflect.ValueOf(ctx.OrigCaller),
+				)
+				addrT := store.GetType(gno.DeclaredTypeID("std", "Address"))
+				res0.T = addrT
+				m.PushValue(res0)
+			},
+		)
+
+		// XXX PrevRealm() https://github.com/gnolang/gno/pull/667
 	case "std":
 		// NOTE: some of these are overridden in tests/imports.go
 		// Also see stdlibs/InjectPackage.
