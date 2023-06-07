@@ -1,5 +1,9 @@
 package std
 
+import (
+	istd "internal/std"
+)
+
 // Realm functions can call std.GetBanker(options) to get
 // a banker instance. Banker objects cannot be persisted,
 // but can be passed onto other functions to be transacted
@@ -62,6 +66,13 @@ func (ba bankAdapter) TotalCoin(denom string) int64 {
 }
 
 func (ba bankAdapter) IssueCoin(addr Address, denom string, amount int64) {
+	// XXX apply PrevRealm.PkgPath,  https://github.com/gnolang/gno/pull/667
+	// denom shoulde `pkg_path@denom`
+
+	// from := std.PrevRealm().PkgPath
+	from := istd.GetOrigCaller().String()
+
+	denom = from + "@" + denom
 	ba.nativeBanker.IssueCoin(addr, denom, amount)
 }
 
