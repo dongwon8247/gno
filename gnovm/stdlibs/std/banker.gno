@@ -1,6 +1,8 @@
 package std
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	istd "internal/std"
 )
 
@@ -67,12 +69,18 @@ func (ba bankAdapter) TotalCoin(denom string) int64 {
 
 func (ba bankAdapter) IssueCoin(addr Address, denom string, amount int64) {
 	// XXX apply PrevRealm.PkgPath,  https://github.com/gnolang/gno/pull/667
-	// denom shoulde `pkg_path@denom`
+
+	// Similar to ibc ==> "ibc/" + sha256('path' + 'base_denom')
+	// "realm/" + sha256('pkg_path' + 'base_denom')
 
 	// from := std.PrevRealm().PkgPath
 	from := istd.GetOrigCaller().String()
+	to_hash := from + "/" + denom
 
-	denom = from + "@" + denom
+	hash := sha256.Sum256([]byte(to_hash))[:]
+	hex_hash := hex.EncodeToString(hash)
+
+	denom = "realm/" + hex_hash
 	ba.nativeBanker.IssueCoin(addr, denom, amount)
 }
 

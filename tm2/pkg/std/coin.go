@@ -617,7 +617,8 @@ func (coins Coins) Sort() Coins {
 
 var (
 	// Denominations can be 3 ~ 16 characters long.
-	reDnmString = `[a-z][a-z0-9]{2,15}`
+	// reDnmString = `[a-z][a-z0-9]{2,15}` // Gno
+	reDnmString = `[a-zA-Z][a-zA-Z0-9@/:._-]{2,127}` // Cosmos with '@'
 	reAmt       = `[[:digit:]]+`
 	reDecAmt    = `[[:digit:]]*\.[[:digit:]]+`
 	reSpc       = `[[:space:]]*`
